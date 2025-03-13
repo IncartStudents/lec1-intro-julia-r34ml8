@@ -182,3 +182,58 @@ y = f.(x)
 gr()
 plot(x, y, label = "line")
 scatter!(x, y, label = "points")
+plotlyjs()
+plot(x, y, label = "line")
+scatter!(x, y, label = "points")
+#=
+globaltemperature = [14.4, 14.5, 14.8, 15.2, 15.5, 15.8]
+numpirates = [45000, 20000, 15000, 5000, 400, 17]
+plot(numpirates, globaltemperature, legend=false)
+scatter!(numpirates, globaltemperature, legend=false)
+xflip!
+xlabel!("Number of Pirates")
+ylabel!("Global Temperature")
+title!("Influence of pirate population on global warming")
+=#
+p1 = plot(x, x)
+p2 = plot(x, x.^2)
+p3 = plot(x, x.^3)
+p4 = plot(x, x.^4)
+plot(p1, p2, p3, p4, layout=(2, 2), legend=false)
+
+methods(+)
+@which 3 + 3
+@which 3.0 + 3.0
+@which 3 + 3.0
+import Base: +
++(x::String, y::String) = string(x, y)
+"hello " + "world!"
+@which "hello " + "world!"
+foo(x, y) = println("duck-typed foo")
+foo(x::Int, y::Float64) = println("foo with integer and float")
+foo(x::Float64, y::Float64) = println("foo with two floats")
+foo(x::Int, y::Int) = println("foo with two integers")
+foo(1, 1)
+foo(1., 1.)
+foo(1, 1.)
+foo(true, false)
+
+A = rand(1:4, 3, 3)
+B = A
+C = copy(A)
+[B C]
+A[1] = 17
+[B C]
+x = ones(3)
+b = A * x
+Asym = A + A'
+Apd = A'A
+A\b
+Atall = A[:, 1:2]
+display(Atall)
+Atall\b
+A = randn(3, 3)
+[A[:, 1] A[:, 1]]\b
+Ashort = A[1:2,:]
+display(Ashort)
+Ashort\b[1:2]
