@@ -11,44 +11,79 @@
 # Что происходит с глобальной константой PI, о чем предупреждает интерпретатор?
 const PI = 3.14159
 PI = 3.14
+# Нельзя менять значение константы
 
 # Что происходит с типами глобальных переменных ниже, какого типа `c` и почему?
 a = 1
+# Переменным, инициализированым числом без точки присваивается тип Int64.
 b = 2.0
+# Переменным, инициализированым числом с точкой присваивается тип Float64.
 c = a + b
+#= Т.к. переменные a и b разных типов, значение a типа Int64 продвигается до типа Float64.
+Сумма двух значений типа Float64 дает соответственно Float64. =#
 
 # Что теперь произошло с переменной а? Как происходит биндинг имен в Julia?
 a = "foo"
+typeof(a)
+# Можно присваивать переменной значения не свойственные ее типу, что влечет за собой его изменение.
 
 # Что происходит с глобальной переменной g и почему? Чем ограничен биндинг имен в Julia?
 g::Int = 1
 g = "hi"
+# Нельзя при явно заданном типе присвоить переменной значение неконвертируемое в данный тип.
 
 function greet()
     g = "hello"
     println(g)
 end
 greet()
+# Предыдущая переменная g не входит в пространство имен greet(), в связи с чем при инициализации получает тип String.
 
 # Чем отличаются присвоение значений новому имени - и мутация значений?
 v = [1,2,3]
-z = v
-v[1] = 3
-v = "hello"
-z
+z = v # Здесь происходит присвоение значению (вектору из трех элементов) нового имени
+v[1] = 3 # Здесь происходит мутация значения
+v = "hello" # Теперь это имя указывает на другое значение
+z # Все еще вектор, но с измененным первым элементом
 
 # Написать тип, параметризованный другим типом
+struct House{T}
+    rooms::T
+    floors::T
+    people::T
+end
 
 #=
 Написать функцию для двух аругментов, не указывая их тип,
 и вторую функцию от двух аргментов с конкретными типами,
 дать пример запуска
 =#
+function print_types(first, second)
+    first_type = typeof(first)
+    second_type = typeof(second)
+    println("The first type is $first_type and the second type is $second_type")
+end
+
+print_types(1, 0.3)
+
+function middle(arr::Vector, see_sum::Bool)
+    len = length(arr)
+    sum = 0
+    for i in 1:len
+        sum += arr[i]
+    end
+    if see_sum
+        println("Sum is $sum")
+    end
+    println("The middle value is $(sum/len)")
+end
+
+middle([1, 2, 3], true)
 
 #=
-Абстрактный тип - ключевое слово?
-Примитивный тип - ключевое слово?
-Композитный тип - ключевое слово?
+Абстрактный тип - abstract type
+Примитивный тип - primitive type
+Композитный тип - struct
 =#
 
 #=
@@ -57,7 +92,27 @@ z
 Выполнить функции над объектами подтипов 1 и 2 и объяснить результат
 (функция выводит произвольный текст в консоль)
 =#
-
+abstract type AbstractType end
+struct Type1 <: AbstractType
+    value::Int
+end
+struct Type2 <: AbstractType
+    value::Int
+end
+function func1(obj::AbstractType)
+    println("Abstract type")
+end
+function func2(obj::Type1)
+    println("Type 1")
+end
+type1_var = Type1(1)
+type2_var = Type2(2)
+func1(type1_var)
+func1(type2_var)
+func2(type1_var)
+#func2(type2_var)
+# func2 не сработала на type2_var, потому что Type2 не является подтипом Type1
+# Однако func1 сработала на обоих объектах, потому что Type1 и Type2 наследуются от AbstractType
 
 #===========================================================================================
 2. Функции:
@@ -68,14 +123,25 @@ z
 =#
 
 # Пример обычной функции
+function hello()
+    println("Hello")
+end
 
-# Пример лямбда-функции (аннонимной функции)
-
+# Пример лямбда-функции (анонимной функции)
+hi = () -> println("Hi")
+hi()
 # Пример функции с переменным количеством аргументов
+varargs = (a, b...) -> println("a = $a and b = $b")
 
 # Пример функции с именованными аргументами
+function named_args(; a = 1, b = 2, c = 3)
+    println("a = $a, b = $b, c = $c")
+end
 
 # Функции с переменным кол-вом именованных аргументов
+function named_varargs(; a = 1, b = 2, c = 3, d...)
+    println("a = $a, b = $b, c = $c, d = $d")
+end
 
 #=
 Передать кортеж в функцию, которая принимает на вход несколько аргументов.
@@ -83,6 +149,14 @@ z
 Использовать splatting - деструктуризацию кортежа в набор аргументов.
 =#
 
+function foo(a, b)
+    a = a * b
+    b = b * 2
+    return a, b
+end
+input = (1, 2)
+output = foo(input...)
+println("output = $output")
 
 #===========================================================================================
 3. loop fusion, broadcast, filter, map, reduce, list comprehension
@@ -93,6 +167,9 @@ z
 - через loop fusion и
 - с помощью reduce
 =#
+arr = [1, 2, 3, 4, 5]
+
+prod = reduce(*, arr)
 
 #=
 Написать функцию от одного аргумента и запустить ее по всем элементам массива
@@ -101,26 +178,47 @@ c помощью map
 c помощью list comprehension
 указать, чем это лучше явного цикла?
 =#
+inc = x -> x + 1
+
+inc.(arr)
+map(inc, arr)
+[inc(x) for x in arr]
+# Это лучше явного цикла, потому что запись получается короче и код выполняется быстрее
+
 
 # Перемножить вектор-строку [1 2 3] на вектор-столбец [10,20,30] и объяснить результат
-
+v_1 = [1, 2, 3]
+v_2 = [10, 20, 30]
+v_2 = v_2'
+res = v_1 * v_2
+# Каждый элемент вектора-строки умножается на соответствующий элемент вектора-столбца,
+# результат умножения записывается в соответствующий элемент матрицы-результата
 
 # В одну строку выбрать из массива [1, -2, 2, 3, 4, -5, 0] только четные и положительные числа
-
+arr = [1, -2, 2, 3, 4, -5, 0]
+res = filter(x -> x > 0 && x % 2 == 0, arr)
+println(res)
 
 # Объяснить следующий код обработки массива names - что за number мы в итоге определили?
 using Random
 Random.seed!(123)
-names = [rand('A':'Z') * '_' * rand('0':'9') * rand([".csv", ".bin"]) for _ in 1:100]
+names_::Vector{String}
+names_ = [rand('A':'Z') * '_' * rand('0':'9') * rand([".csv", ".bin"]) for _ in 1:100]
+typeof(names_)
 # ---
-same_names = unique(map(y -> split(y, ".")[1], filter(x -> startswith(x, "A"), names)))
+same_names = unique(map(y -> split(y, ".")[1], filter(x -> startswith(x, "A"), names_)))
+# same_names - массив уникальных имен А_цифра 
 numbers = parse.(Int, map(x -> split(x, "_")[end], same_names))
+# numbers - массив цифр из имен same_names
 numbers_sorted = sort(numbers)
 number = findfirst(n -> !(n in numbers_sorted), 0:9)
+# number - номер первой отсутствующей цифры в массиве numbers_sorted
+# number - минимальный номер отсутствующего файла с литерой А любого расширения
 
 # Упростить этот код обработки:
-
-
+A_num = filter(x -> x[1] == 'A', names_)
+nums = parse.(Int, map(x -> x[3], A_num))
+num = findfirst(n -> !(n in nums), 0:9)
 #===========================================================================================
 4. Свой тип данных на общих интерфейсах
 =#
@@ -129,6 +227,21 @@ number = findfirst(n -> !(n in numbers_sorted), 0:9)
 написать свой тип ленивого массива, каждый элемент которого
 вычисляется при взятии индекса (getindex) по формуле (index - 1)^2
 =#
+
+struct LazyArray
+    len::Int
+end
+
+function Base.getindex(arr::LazyArray, index::Int)
+    if (index < 1) || (index > arr.len)
+        throw(BoundsError(arr, index))
+    end
+    return (index - 1)^2
+end
+
+myLA = LazyArray(10)
+println(myLA[5])
+# println(myLA[0])
 
 #=
 Написать два типа объектов команд, унаследованных от AbstractCommand,
@@ -140,17 +253,74 @@ number = findfirst(n -> !(n in numbers_sorted), 0:9)
 abstract type AbstractCommand end
 apply!(cmd::AbstractCommand, target::Vector) = error("Not implemented for type $(typeof(cmd))")
 
+struct SortCmd <: AbstractCommand end
+struct ChangeAtCmd <: AbstractCommand
+    index::Int
+    value::Any
+end
 
+apply!(cmd::SortCmd, target::Vector) = sort!(target)
+apply!(cmd::ChangeAtCmd, target::Vector) = (target[cmd.index] = cmd.value)
+
+v = [5, 2, 3]
+apply!(SortCmd(), v)
+apply!(ChangeAtCmd(2, 10), v)
+v
 # Аналогичные команды, но без наследования и в виде замыканий (лямбда-функций)
-
-
+SortCmd_() = (target) -> sort!(target)
+ChangeAtCmd_(i, val) = (target) -> (target[i] = val)
+v = SortCmd_()(v)
+ChangeAtCmd_(2, 10)(v)
+v
 #===========================================================================================
 5. Тесты: как проверять функции?
 =#
-
+# using Test
 # Написать тест для функции
+sort_func = SortCmd_()
+@testset "SortCmd_ tests" begin
+    # Проверка базового случая
+    target = [3, 1, 4, 1, 5, 9, 2, 6, 5]
+    expected = sort(target)
+    sort_func(target)
+    @test target == expected
 
+    # Проверка с пустым вектором
+    target = Int[]
+    expected = Int[]
+    sort_func(target)
+    @test target == expected
 
+    # Проверка с вектором, содержащим повторяющиеся элементы
+    target = [2, 2, 2, 2]
+    expected = [2, 2, 2, 2]
+    sort_func(target)
+    @test target == expected
+
+    # Проверка с вектором, содержащим отрицательные числа
+    target = [0, -1, -3, 2, 5, -2]
+    expected = sort(target)
+    sort_func(target)
+    @test target == expected
+
+    # Проверка с вектором, содержащим большие числа
+    target = [1000, 300, 2000, 400, 500]
+    expected = sort(target)
+    sort_func(target)
+    @test target == expected
+
+    # Проверка с уже отсортированным вектором
+    target = [1, 2, 3, 4, 5]
+    expected = [1, 2, 3, 4, 5]
+    sort_func(target)
+    @test target == expected
+
+    # Проверка с вектором, содержащим элементы в обратном порядке
+    target = [5, 4, 3, 2, 1]
+    expected = [1, 2, 3, 4, 5]
+    sort_func(target)
+    @test target == expected
+end
 #===========================================================================================
 6. Дебаг: как отладить функцию по шагам?
 =#
@@ -158,6 +328,22 @@ apply!(cmd::AbstractCommand, target::Vector) = error("Not implemented for type $
 #=
 Отладить функцию по шагам с помощью макроса @enter и точек останова
 =#
+using Debugger
+
+function middle_(arr::Vector, see_sum::Bool)
+    len = length(arr)
+    sum = 0
+    for i in 1:len
+        sum += arr[i]
+        @bp
+    end
+    if see_sum
+        println("Sum is $sum")
+    end
+    println("The middle value is $(sum/len)")
+end
+
+Debugger.@enter middle_([1, 2, 3, 4, 5], true)
 
 
 #===========================================================================================
@@ -168,6 +354,8 @@ apply!(cmd::AbstractCommand, target::Vector) = error("Not implemented for type $
 Оценить производительность функции с помощью макроса @profview,
 и добавить в этот репозиторий файл со скриншотом flamechart'а
 =#
+using ProfileView
+
 function generate_data(len)
     vec1 = Any[]
     for k = 1:len
@@ -181,6 +369,7 @@ end
 
 @time generate_data(1_000_000);
 
+@profview generate_data(1_000_000);
 
 # Переписать функцию выше так, чтобы она выполнялась быстрее:
 
