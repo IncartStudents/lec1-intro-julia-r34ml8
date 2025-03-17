@@ -2,7 +2,10 @@
 # https://youtu.be/4igzy3bGVkQ
 # по желанию можно поменять значения и попробовать другие функции
 
-println("Hello world!")
+a = 2
+if (1 < a < 4)
+    println("Hello world!")
+end
 
 my_answer = 20
 println(typeof(my_answer))
